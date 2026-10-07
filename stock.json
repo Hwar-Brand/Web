@@ -1,19 +1,19 @@
 {
   "_readme": "Edit the numbers, then commit. price = the shirt's price. stock = how many are left (0 = sold out). Keep the ids (HW-001, HW-002, HW-003) exactly as they are.",
   "updated": "2026-10-07",
-  "currency": "$",
+  "currency": "EG",
   "shirts": {
     "HW-001": {
-      "price": 48,
-      "stock": 12
+      "price": 100,
+      "stock": 23
     },
     "HW-002": {
-      "price": 52,
-      "stock": 3
+      "price": 144,
+      "stock": 77
     },
     "HW-003": {
-      "price": 46,
-      "stock": 0
+      "price": 233,
+      "stock": 1123
     }
   }
 }
