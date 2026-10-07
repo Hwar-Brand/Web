@@ -16,7 +16,7 @@ html{scroll-behavior:smooth}
 body{font:400 1rem/1.55 Archivo,system-ui,"Segoe UI",Arial,sans-serif;background:var(--p);color:#000}
 a{color:inherit}
 :focus-visible{outline:3px solid var(--b);outline-offset:3px}
-.hero :focus-visible,.story :focus-visible,footer :focus-visible,header :focus-visible{outline-color:#fff}
+.hero :focus-visible,footer :focus-visible,header :focus-visible{outline-color:#fff}
 h2,.pn{font-weight:800;font-stretch:125%;font-style:italic;font-size:clamp(2.2rem,6vw,4.5rem);line-height:.95;letter-spacing:-.02em}
 .in{max-width:1240px;margin:0 auto}
 
@@ -27,7 +27,7 @@ header nav{display:flex;gap:1.75rem;font-weight:600}
 header a{text-decoration:none}
 header nav a:hover{text-decoration:underline;text-underline-offset:4px}
 
-.hero{--x:50%;--y:40%;min-height:100svh;display:flex;flex-direction:column;padding:5rem 1.5rem 0;color:#fff;overflow:hidden;background:radial-gradient(560px circle at var(--x) var(--y),rgba(255,255,255,.13),transparent 65%),#000}
+.hero{--x:50%;--y:40%;min-height:100svh;display:flex;flex-direction:column;padding:5rem 1.5rem 3rem;color:#fff;overflow:hidden;background:radial-gradient(560px circle at var(--x) var(--y),rgba(255,255,255,.13),transparent 65%),#000}
 .hero-main{flex:1;display:grid;align-content:center;justify-items:center;gap:1.5rem;text-align:center;padding-top:1rem}
 .hero h1{line-height:0}
 .hero h1 img{width:min(78vw,760px);height:auto;animation:wipe 1s cubic-bezier(.7,0,.2,1) both}
@@ -41,9 +41,6 @@ header nav a:hover{text-decoration:underline;text-underline-offset:4px}
 .fan a:nth-child(3){transform:rotate(7deg);animation-delay:1.2s}
 .fan a:hover{transform:translateY(-12px) rotate(0)}
 .fan img{display:block;width:100%;height:auto;filter:drop-shadow(0 24px 24px rgba(0,0,0,.7))}
-.facts{list-style:none;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;border-top:1px solid #3a3a3a;max-width:1240px;width:100%;margin:0 auto}
-.facts li{padding:1.1rem 0 1.5rem;color:#a8a8a8;font-size:.95rem}
-.facts b{display:block;color:#fff;font-weight:700;font-stretch:112%}
 
 .shop{padding:6rem 1.5rem}
 .head{display:flex;justify-content:space-between;align-items:end;gap:2rem;flex-wrap:wrap;margin-bottom:3rem}
@@ -78,24 +75,13 @@ dt{color:#555}dd{font-weight:600}
 .more{max-width:1240px;margin:6rem auto 2rem}
 #pdp .grid{max-width:1240px;margin:0 auto}
 
-.story{background:#000;color:#fff;padding:7rem 1.5rem}
-.story .in{display:grid;grid-template-columns:1.1fr .9fr;gap:4rem;align-items:start}
-.story p{margin-top:1.5rem;max-width:42ch;color:#c4c4c4;font-size:1.15rem}
-.story dl div{border-color:#444}.story dt{color:#9a9a9a}
 
 
 footer{background:var(--b);color:#fff;padding:5rem 1.5rem 2.5rem}
-footer .in{display:grid;grid-template-columns:1fr 1fr;gap:3rem}
-footer img{height:3.2rem;width:auto;margin-bottom:1.5rem}
-footer h2{font-size:clamp(1.8rem,4vw,3rem)}
-.signup{display:flex;gap:.5rem;flex-wrap:wrap}
-.signup input{flex:1 1 220px;font:inherit;padding:.9rem 1.2rem;border-radius:999px;border:2px solid #fff;background:transparent;color:#fff}
-.signup input::placeholder{color:#cfd6ff}
-.signup button{font:inherit;border:0;border-radius:999px;padding:.9rem 1.6rem;background:#fff;color:#000;font-weight:800;font-style:italic;cursor:pointer}
-#msg{margin-top:.75rem;min-height:1.5em}
+footer img{display:block;height:3.2rem;width:auto;margin-bottom:1.5rem}
 .fine{grid-column:1/-1;opacity:.85;font-size:.9rem;border-top:1px solid rgba(255,255,255,.35);padding-top:1.25rem}
 
-@media (max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.pd,.story .in,footer .in{grid-template-columns:1fr}.facts{grid-template-columns:1fr;gap:0}.facts li{padding:.8rem 0}}
+@media (max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.pd{grid-template-columns:1fr}}
 @media (max-width:560px){.grid,.g2{grid-template-columns:1fr}header nav{gap:1rem}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
 </style>
@@ -104,7 +90,7 @@ footer h2{font-size:clamp(1.8rem,4vw,3rem)}
 
 <header>
   <a href="#/"><img data-logo alt="Hwar home" width="90" height="44"></a>
-  <nav aria-label="Main"><a href="#/shop">Shirts</a><a href="#/story">Story</a></nav>
+  <nav aria-label="Main"><a href="#/shop">Shirts</a></nav>
 </header>
 
 <main id="home">
@@ -114,11 +100,6 @@ footer h2{font-size:clamp(1.8rem,4vw,3rem)}
       <p class="lede">Heavyweight shirts. Big back prints.</p>
       <div class="fan" id="fan"></div>
     </div>
-    <ul class="facts">
-      <li><b>280 gsm cotton</b>Washed and pre-shrunk</li>
-      <li><b>Small numbered runs</b>When a size sells out, it's gone</li>
-      <li><b>Boxy, drop-shoulder fit</b>Roomy through the body</li>
-    </ul>
   </div>
 
   <section class="shop" id="shop">
@@ -127,36 +108,13 @@ footer h2{font-size:clamp(1.8rem,4vw,3rem)}
       <ul class="grid" id="grid"></ul>
     </div>
   </section>
-
-  <section class="story" id="story">
-    <div class="in">
-      <div>
-        <h2>Cut sharp. Built to take a beating.</h2>
-        <p>Hwar makes heavyweight shirts with big back prints and quiet fronts. Every sample is washed thirty times before we approve it. If it doesn't look better, it doesn't ship.</p>
-      </div>
-      <dl>
-        <div><dt>Fabric</dt><dd>280 gsm combed cotton jersey</dd></div>
-        <div><dt>Fit</dt><dd>Boxy, drop shoulder, true to size</dd></div>
-        <div><dt>Finish</dt><dd>Garment washed, pre-shrunk</dd></div>
-        <div><dt>Print</dt><dd>Water-based ink, no cracking</dd></div>
-        <div><dt>Care</dt><dd>Cold wash, hang or tumble low</dd></div>
-      </dl>
-    </div>
-  </section>
 </main>
 
 <main id="pdp" hidden></main>
 
 <footer>
   <div class="in">
-    <div><img data-logo alt="Hwar" width="90" height="44"><h2>Get a note before the next drop.</h2></div>
-    <div>
-      <form class="signup" id="signup">
-        <input type="email" id="email" placeholder="you@example.com" aria-label="Email address" required>
-        <button type="submit">Notify me</button>
-      </form>
-      <p id="msg" role="status"></p>
-    </div>
+    <img data-logo alt="Hwar" width="90" height="44">
     <p class="fine">© 2026 Hwar. All rights reserved.</p>
   </div>
 </footer>
@@ -207,7 +165,7 @@ function route(){
   render();
   if(k){scrollTo(0,0);return}
   document.title="Hwar — heavyweight shirts";
-  const sec=location.hash.match(/^#\/(shop|story)$/);
+  const sec=location.hash.match(/^#\/(shop)$/);
   sec?$("#"+sec[1]).scrollIntoView():scrollTo(0,0);
 }
 $("#pdp").addEventListener("click",e=>{
@@ -221,10 +179,6 @@ addEventListener("hashchange",route);
 route();
 fetch(STOCK_URL,{cache:"no-store"}).then(r=>r.ok?r.json():Promise.reject()).then(j=>{if(j&&j.shirts)ST=j;else failed=true;render()}).catch(()=>{failed=true;render()});
 
-$("#signup").addEventListener("submit",e=>{
-  e.preventDefault();
-  $("#msg").textContent="You're on the list. We'll email "+$("#email").value+" before the next drop.";e.target.reset();
-});
 const hero=$("#hero");
 hero.addEventListener("pointermove",e=>{const r=hero.getBoundingClientRect();hero.style.setProperty("--x",e.clientX-r.left+"px");hero.style.setProperty("--y",e.clientY-r.top+"px")});
 new IntersectionObserver(([e])=>document.body.classList.toggle("past",!e.isIntersecting||e.intersectionRatio<.15),{threshold:[0,.15]}).observe(hero);
