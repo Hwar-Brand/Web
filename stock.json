@@ -5,15 +5,15 @@
   "shirts": {
     "HW-001": {
       "price": 100,
-      "stock": 23
+      "stock": 0
     },
     "HW-002": {
       "price": 144,
-      "stock": 77
+      "stock": 0
     },
     "HW-003": {
       "price": 233,
-      "stock": 1123
+      "stock": 0
     }
   }
 }
