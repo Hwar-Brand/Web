@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HWAR — Web</title>
+<title>HWAR — Web Test</title>
 <meta name="description" content="HWAR makes heavyweight graphic shirts for everyday wear. Discover Drop 01.">
 <meta name="theme-color" content="#171815">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23000'/%3E%3Cpath d='M50 6C53 34 66 47 94 50 66 53 53 66 50 94 47 66 34 53 6 50 34 47 47 34 50 6Z' fill='%23fff'/%3E%3C/svg%3E">
@@ -202,6 +202,10 @@ footer img{height:2.6rem;filter:brightness(0) invert(1);margin-bottom:1rem}
 .tog button:hover{transform:translateY(-2px)}
 body::before{content:"";position:fixed;inset:0 auto auto 0;z-index:10;width:var(--scroll-progress,0%);height:2px;background:linear-gradient(90deg,#d08b62,var(--accent));pointer-events:none}
 @media(max-width:600px){.fan a{animation-duration:.7s}.motion-reveal{transform:translate3d(0,14px,0)}}
+.social-links{display:flex;flex-wrap:wrap;gap:1.5rem;margin:0 0 1.5rem}
+.social-links a{display:inline-flex;align-items:center;gap:.45rem;color:#f3f0e9;font-size:.72rem;font-weight:700;letter-spacing:.14em;text-decoration:none;text-transform:uppercase;transition:opacity .2s,translate .2s}
+.social-links a:hover{opacity:.68;translate:0 -2px}
+.social-links a span{font-size:.9rem}
 @media(prefers-reduced-motion:reduce){
  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
  .motion-reveal{opacity:1;transform:none;will-change:auto}
@@ -240,6 +244,10 @@ body::before{content:"";position:fixed;inset:0 auto auto 0;z-index:10;width:var(
   <div class="in">
     <img data-logo alt="Hwar" width="90" height="44">
     <p class="footer-note">DES.</p>
+    <nav class="social-links" aria-label="Social media">
+      <a href="https://www.tiktok.com/@hwarbrand221" target="_blank" rel="noopener noreferrer">TikTok <span aria-hidden="true">↗</span></a>
+      <a href="https://www.instagram.com/hwar_brand" target="_blank" rel="noopener noreferrer">Instagram <span aria-hidden="true">↗</span></a>
+    </nav>
     <p class="fine">© 2026 Hwar. All rights reserved.</p>
   </div>
 </footer>
