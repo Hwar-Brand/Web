@@ -5,19 +5,19 @@
   "shirts": {
     "HW-001": {
       "price": 100,
-      "stock": 0,
+      "stock": 23,
       "description": "HWAR-TEST-SHIRT-1",
       "color": "Olive"
     },
     "HW-002": {
       "price": 144,
-      "stock": 0,
+      "stock": 34,
       "description": "HWAR-TEST-SHIRT-2",
       "color": "Black"
     },
     "HW-003": {
       "price": 233,
-      "stock": 0,
+      "stock": 12,
       "description": "HWAR-TEST-SHIRT-3",
       "color": "SERVER ERROR STATUS 101"
     }
