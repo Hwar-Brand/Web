@@ -6,7 +6,7 @@
     "HW-001": {
       "price": 100,
       "stock": 23,
-      "description": "HWAR-TEST-SHIRT-1",
+      "description": "HWAR-TEST-SHIRT-10",
       "color": "Olive"
     },
     "HW-002": {
@@ -19,7 +19,7 @@
       "price": 233,
       "stock": 12,
       "description": "HWAR-TEST-SHIRT-3",
-      "color": "SERVER ERROR STATUS 101"
+      "color": "TEST"
     }
   }
 }
